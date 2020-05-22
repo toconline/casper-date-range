@@ -25,24 +25,6 @@ class CasperDateRange extends PolymerElement {
         type: String,
       },
       /**
-       * The range's end date in the specified format
-       *
-       * @type {String}
-       */
-      formattedEndDate: {
-        type: String,
-        notify: true,
-      },
-      /**
-       * The range's start date in the specified format
-       *
-       * @type {String}
-       */
-      formattedStartDate: {
-        type: String,
-        notify: true,
-      },
-      /**
        * The start date picker's placeholder.
        *
        * @type {String}
@@ -108,7 +90,6 @@ class CasperDateRange extends PolymerElement {
         format="[[format]]"
         value="{{__startDate}}"
         maximum-date="[[__maximumStartDate]]"
-        formatted-value="{{formattedStartDate}}"
         input-placeholder="[[startDatePlaceholder]]">
       </casper-date-picker>
 
@@ -117,7 +98,6 @@ class CasperDateRange extends PolymerElement {
         format="[[format]]"
         value="{{__endDate}}"
         minimum-date="[[__minimumEndDate]]"
-        formatted-value="{{formattedEndDate}}"
         input-placeholder="[[endDatePlaceholder]]">
       </casper-date-picker>
     `;
@@ -186,7 +166,7 @@ class CasperDateRange extends PolymerElement {
     if (this.valueLock) return;
 
     // If we get an empty / invalid value, just set both dates to empty.
-    if (!value ||value.constructor !== Object || !value.hasOwnProperty('start') || !value.hasOwnProperty('end') || moment(value.start) > moment(value.end)) {
+    if (!value || value.constructor !== Object || !value.hasOwnProperty('start') || !value.hasOwnProperty('end') || moment(value.start) > moment(value.end)) {
       this.value = { start: '', end: '' };
       return;
     }
