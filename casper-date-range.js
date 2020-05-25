@@ -161,7 +161,7 @@ class CasperDateRange extends PolymerElement {
 
   ready () {
     super.ready();
-    window.range = this;
+
     this.$.start.addEventListener('opened-changed', event => this.__startDateOpenedChanged(event));
   }
 
