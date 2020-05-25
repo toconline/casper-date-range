@@ -8,6 +8,16 @@ class CasperDateRange extends PolymerElement {
   static get properties () {
     return {
       /**
+       * The end date picker's value.
+       *
+       * @type {String}
+       */
+      endDate: {
+        type: String,
+        notify: true,
+        observer: '__endDateChanged'
+      },
+      /**
        * The end date picker's placeholder.
        *
        * @type {String}
@@ -17,12 +27,75 @@ class CasperDateRange extends PolymerElement {
         value: 'Data de fim'
       },
       /**
+       * Flag that states if the end date is required.
+       *
+       * @type {Boolean}
+       */
+      endDateRequired: {
+        type: Boolean,
+        value: true
+      },
+      /**
        * The format in which the dates should appear.
        *
        * @type {String}
        */
       format: {
         type: String,
+      },
+      /**
+       * The maximum date which can be selected.
+       *
+       * @type {String}
+       */
+      maximumDate: {
+        type: String,
+        observer: '__maximumDateChanged'
+      },
+      /**
+       * The error that should appear when the maximum date is surpassed.
+       *
+       * @type {String}
+       */
+      maximumDateErrorMessage: {
+        type: String
+      },
+      /**
+       * The minimum date which can be selected.
+       *
+       * @type {String}
+       */
+      minimumDate: {
+        type: String,
+        observer: '__minimumDateChanged'
+      },
+      /**
+       * The error that should appear when the minimum date is surpassed.
+       *
+       * @type {String}
+       */
+      minimumDateErrorMessage: {
+        type: String
+      },
+      /**
+       * The space between both pickers.
+       *
+       * @type {Number}
+       */
+      spaceBetweenPickers: {
+        type: Number,
+        value: 10,
+        observer: '__spaceBetweenPickersChanged'
+      },
+      /**
+       * The start date picker's value.
+       *
+       * @type {String}
+       */
+      startDate: {
+        type: String,
+        notify: true,
+        observer: '__startDateChanged'
       },
       /**
        * The start date picker's placeholder.
@@ -34,33 +107,14 @@ class CasperDateRange extends PolymerElement {
         value: 'Data de ínicio'
       },
       /**
-       * The range's value.
+       * Flag that states if the start date is required.
        *
-       * @type {Object}
+       * @type {Boolean}
        */
-      value: {
-        type: Object,
-        notify: true,
-        observer: '__valueChanged'
+      startDateRequired: {
+        type: Boolean,
+        value: true
       },
-      /**
-       * The end date picker's value.
-       *
-       * @type {String}
-       */
-      __endDate: {
-        type: String,
-        observer: '__endDateChanged'
-      },
-      /**
-       * The start date picker's value.
-       *
-       * @type {String}
-       */
-      __startDate: {
-        type: String,
-        observer: '__startDateChanged'
-      }
     };
   }
 
@@ -75,39 +129,39 @@ class CasperDateRange extends PolymerElement {
         casper-date-picker {
           flex: 1;
         }
-
-        #start {
-          margin-right: 5px;
-        }
-
-        #end {
-          margin-left: 5px;
-        }
       </style>
 
       <casper-date-picker
         id="start"
         format="[[format]]"
-        value="{{__startDate}}"
+        value="{{startDate}}"
+        required="[[startDateRequired]]"
+        minimum-date="[[__minimumStartDate]]"
         maximum-date="[[__maximumStartDate]]"
-        input-placeholder="[[startDatePlaceholder]]">
+        input-placeholder="[[startDatePlaceholder]]"
+        required-error-message="[[requiredErrorMessage]]"
+        minimum-date-error-message="[[minimumDateErrorMessage]]"
+        maximum-date-error-message="[[maximumDateErrorMessage]]">
       </casper-date-picker>
 
       <casper-date-picker
         id="end"
         format="[[format]]"
-        value="{{__endDate}}"
+        value="{{endDate}}"
+        required="[[endDateRequired]]"
         minimum-date="[[__minimumEndDate]]"
-        input-placeholder="[[endDatePlaceholder]]">
+        maximum-date="[[__maximumEndDate]]"
+        input-placeholder="[[endDatePlaceholder]]"
+        required-error-message="[[requiredErrorMessage]]"
+        minimum-date-error-message="[[minimumDateErrorMessage]]"
+        maximum-date-error-message="[[maximumDateErrorMessage]]">
       </casper-date-picker>
     `;
   }
 
   ready () {
     super.ready();
-
-    this.$.end.required = false;
-    this.$.start.required = false;
+    window.range = this;
     this.$.start.addEventListener('opened-changed', event => this.__startDateOpenedChanged(event));
   }
 
@@ -119,60 +173,51 @@ class CasperDateRange extends PolymerElement {
   }
 
   /**
-   * This method is invoked when the start date picker's value changes.
+   * This method is invoked when the mimum date changes.
    *
-   * @param {String} startDate The start date picker's value.
+   * @param {String} minimumDate The range's minimum date.
+   */
+  __minimumDateChanged (minimumDate) {
+    if (!this.__isDateAfterThanMinimum(this.endDate, minimumDate)) this.endDate = '';
+    if (!this.__isDateAfterThanMinimum(this.startDate, minimumDate)) this.startDate = '';
+
+    this.__minimumStartDate = minimumDate;
+    this.__minimumEndDate = this.startDate || minimumDate;
+  }
+
+  /**
+   * This method is invoked when the maximum date changes.
+   *
+   * @param {String} maximumdate The range's maximum date.
+   */
+  __maximumDateChanged (maximumDate) {
+    if (!this.__isDateBeforeThanMaximum(this.endDate, maximumDate)) this.endDate = '';
+    if (!this.__isDateBeforeThanMaximum(this.startDate, maximumDate)) this.startDate = '';
+
+    this.__maximumEndDate = maximumDate;
+    this.__maximumStartDate = this.endDate || maximumDate;
+  }
+
+  /**
+   * This method is invoked when the start date changes.
+   *
+   * @param {String} startDate The current start date.
    */
   __startDateChanged (startDate) {
-    !startDate
-      ? this.__minimumEndDate = ''
-      : this.__minimumEndDate = startDate;
-
-    // If the __startDateLock property is true, it means the value property was changed outside.
-    if (!this.__startDateLock) this.__setValue();
+    startDate && this.__isDateBetweenLimits(startDate, this.minimumDate, this.maximumDate)
+      ? this.__minimumEndDate = startDate
+      : this.__minimumEndDate = this.minimumDate || '';
   }
 
   /**
-   * This method is invoked when the end date picker's value changes.
-   *
-   * @param {String} endDate The end date picker's value.
+  * This method is invoked when the end date changes.
+  *
+  * @param {String} endDate The current end date.
    */
   __endDateChanged (endDate) {
-    !endDate
-      ? this.__maximumStartDate = ''
-      : this.__maximumStartDate = endDate;
-
-    // If the __endDateLock property is true, it means the value property was changed outside.
-    if (!this.__endDateLock) this.__setValue();
-  }
-
-  /**
-   * This method sets the public value property.
-   */
-  __setValue () {
-    this.__internallyChangeProperty('value', {
-      start: this.__startDate,
-      end: this.__endDate
-    });
-  }
-
-  /**
-   * This method is invoked when the public property value changes.
-   *
-   * @param {String} value The current component's value.
-   */
-  __valueChanged (value) {
-    // If the valueLock property is true, it means the value was changed due to a change in one of the pickers.
-    if (this.valueLock) return;
-
-    // If we get an empty / invalid value, just set both dates to empty.
-    if (!value || value.constructor !== Object || !value.hasOwnProperty('start') || !value.hasOwnProperty('end') || moment(value.start) > moment(value.end)) {
-      this.value = { start: '', end: '' };
-      return;
-    }
-
-    this.__internallyChangeProperty('__endDate', value.end);
-    this.__internallyChangeProperty('__startDate', value.start);
+    endDate && this.__isDateBetweenLimits(endDate)
+      ? this.__maximumStartDate = endDate
+      : this.__maximumStartDate = this.maximumDate || '';
   }
 
   /**
@@ -183,6 +228,49 @@ class CasperDateRange extends PolymerElement {
   __startDateOpenedChanged (event) {
     // This means the start date picker just closed.
     if (!event.detail.value) this.$.end.open();
+  }
+
+  /**
+   * This method is invoked when the space between pickers property changes.
+   *
+   * @param {Number} spaceBetweenPickers The space between both pickers.
+   */
+  __spaceBetweenPickersChanged (spaceBetweenPickers) {
+    const halfSpaceBetweenPickers = parseFloat(spaceBetweenPickers) / 2;
+
+    this.$.end.style.marginLeft = `${halfSpaceBetweenPickers}px`;
+    this.$.start.style.marginRight = `${halfSpaceBetweenPickers}px`;
+  }
+
+  /**
+   * This method checks if the passed date is between the minimum and the maximum allowed ones.
+   *
+   * @param {String} date The date we're checking.
+   * @param {String} minimumDate The minimum allowed date.
+   * @param {String} maximumDate The maximum allowed date.
+   */
+  __isDateBetweenLimits (date, minimumDate, maximumDate) {
+    return this.__isDateAfterThanMinimum(date, minimumDate) && this.__isDateBeforeThanMaximum(date, maximumDate);
+  }
+
+  /**
+   * This method checks if the passed date is after the minimum date.
+   *
+   * @param {String} date The date we're checking.
+   * @param {String} minimumDate The minimum allowed date.
+   */
+  __isDateAfterThanMinimum (date, minimumDate) {
+    return !minimumDate || moment(date) >= moment(minimumDate);
+  }
+
+  /**
+   * This method checks if the passed date is before the maximum date.
+   *
+   * @param {String} date The date we're checking.
+   * @param {String} minimumDate The maximum allowed date.
+   */
+  __isDateBeforeThanMaximum (date, maximumDate) {
+    return !maximumDate || moment(date) <= moment(maximumDate);
   }
 
   /**
