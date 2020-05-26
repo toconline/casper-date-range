@@ -1,6 +1,6 @@
 import moment from 'moment/src/moment.js';
 
-import '@cloudware-casper/casper-date-picker/casper-date-picker.js'
+import '@cloudware-casper/casper-date-picker/casper-date-picker.js';
 import { html, PolymerElement } from '@polymer/polymer/polymer-element.js';
 
 class CasperDateRange extends PolymerElement {
@@ -115,6 +115,25 @@ class CasperDateRange extends PolymerElement {
         type: Boolean,
         value: true
       },
+      /**
+       * The current range value.
+       *
+       * @type {String}
+       */
+      value: {
+        type: String,
+        notify: true,
+        observer: '__valueChanged'
+      },
+      /**
+       * The character used to separate the start and end date.
+       *
+       * @type {String}
+       */
+      valueSeparator: {
+        type: String,
+        value: ','
+      }
     };
   }
 
@@ -173,6 +192,15 @@ class CasperDateRange extends PolymerElement {
   }
 
   /**
+   * This method is invoked when the start date picker's is opened / closed.
+   *
+   * @param {Object} event The event's object.
+   */
+  __startDateOpenedChanged (event) {
+    if (!event.detail.value) this.$.end.open();
+  }
+
+  /**
    * This method is invoked when the mimum date changes.
    *
    * @param {String} minimumDate The range's minimum date.
@@ -207,6 +235,8 @@ class CasperDateRange extends PolymerElement {
     startDate && this.__isDateBetweenLimits(startDate, this.minimumDate, this.maximumDate)
       ? this.__minimumEndDate = startDate
       : this.__minimumEndDate = this.minimumDate || '';
+
+    this.__setValue();
   }
 
   /**
@@ -215,19 +245,41 @@ class CasperDateRange extends PolymerElement {
   * @param {String} endDate The current end date.
    */
   __endDateChanged (endDate) {
-    endDate && this.__isDateBetweenLimits(endDate)
+    endDate && this.__isDateBetweenLimits(endDate, this.minimumDate, this.maximumDate)
       ? this.__maximumStartDate = endDate
       : this.__maximumStartDate = this.maximumDate || '';
+
+    this.__setValue();
   }
 
   /**
-   * This method is invoked when the start date picker's is opened / closed.
-   *
-   * @param {Object} event The event's object.
+  * This method changes the public property value.
    */
-  __startDateOpenedChanged (event) {
-    // This means the start date picker just closed.
-    if (!event.detail.value) this.$.end.open();
+  __setValue () {
+    !this.startDate && !this.endDate
+      ? this.__internallyChangeProperty('value', '')
+      : this.__internallyChangeProperty('value', `${this.startDate || ''}${this.valueSeparator}${this.endDate || ''}`);
+  }
+
+  /**
+   * This method is invoked when the property value changes.
+   *
+   * @param {String} value The new value.
+   */
+  __valueChanged (value) {
+    // This means the value was changed internally so it's not necessary to change the start and end date.
+    if (this.valueLock) return;
+
+    if (!value || !value.includes(this.valueSeparator)) {
+      this.endDate = '';
+      this.startDate = '';
+      return;
+    }
+
+    const [startDate, endDate] = value.split(',');
+
+    this.endDate = endDate;
+    this.startDate = startDate;
   }
 
   /**
