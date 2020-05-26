@@ -192,12 +192,32 @@ class CasperDateRange extends PolymerElement {
   }
 
   /**
+   * This method opens the start date picker.
+   */
+  openStartDatePicker () {
+    if (this.$.end.opened) this.$.end.close();
+
+    this.$.start.open();
+  }
+
+  /**
+   * This method opens the end date picker.
+   */
+  openEndDatePicker () {
+    if (this.$.start.opened) this.$.start.close();
+
+    this.$.end.open();
+  }
+
+  /**
    * This method is invoked when the start date picker's is opened / closed.
    *
    * @param {Object} event The event's object.
    */
   __startDateOpenedChanged (event) {
-    if (!event.detail.value) this.$.end.open();
+    if (!event.detail.value) {
+      this.openEndDatePicker();
+    }
   }
 
   /**
