@@ -184,12 +184,8 @@ class CasperDateRange extends PolymerElement {
     this.$.start.addEventListener('opened-changed', event => this.__startDateOpenedChanged(event));
   }
 
-  get formattedValue () {
-    return {
-      start: this.$.start.formattedValue,
-      end: this.$.end.formattedValue,
-    }
-  }
+  get formattedEndDate () { return this.$.end.formattedValue; }
+  get formattedStartDate () { return this.$.start.formattedValue; }
 
   /**
    * This method opens the start date picker.
@@ -256,7 +252,7 @@ class CasperDateRange extends PolymerElement {
       ? this.__minimumEndDate = startDate
       : this.__minimumEndDate = this.minimumDate || '';
 
-    this.__setValue();
+    if (!this.startDateLock) this.__setValue();
   }
 
   /**
@@ -269,7 +265,7 @@ class CasperDateRange extends PolymerElement {
       ? this.__maximumStartDate = endDate
       : this.__maximumStartDate = this.maximumDate || '';
 
-    this.__setValue();
+    if (!this.endDateLock) this.__setValue();
   }
 
   /**
@@ -291,15 +287,15 @@ class CasperDateRange extends PolymerElement {
     if (this.valueLock) return;
 
     if (!value || !value.includes(this.valueSeparator)) {
-      this.endDate = '';
-      this.startDate = '';
+      this.__internallyChangeProperty('endDate', '');
+      this.__internallyChangeProperty('startDate', '');
       return;
     }
 
     const [startDate, endDate] = value.split(',');
 
-    this.endDate = endDate;
-    this.startDate = startDate;
+    this.__internallyChangeProperty('endDate', endDate);
+    this.__internallyChangeProperty('startDate', startDate);
   }
 
   /**
