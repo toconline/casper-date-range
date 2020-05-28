@@ -1,7 +1,7 @@
 {
   "name": "@cloudware-casper/casper-date-range",
   "main": "casper-date-range.js",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "dependencies": {
     "@cloudware-casper/casper-date-picker": "^1.x",
     "@polymer/polymer": "^3.0.0"
