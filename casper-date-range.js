@@ -17,7 +17,7 @@
 
 import moment from 'moment/src/moment.js';
 
-import '@cloudware-casper/casper-date-picker/casper-date-picker.js';
+import '@toconline/casper-date-picker/casper-date-picker.js';
 import { html, PolymerElement } from '@polymer/polymer/polymer-element.js';
 
 class CasperDateRange extends PolymerElement {
